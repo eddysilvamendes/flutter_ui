@@ -1,7 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:cashier_app/model/menu.dart';
-import 'package:cashier_app/screen/base/dependences/body_section.dart';
-import 'package:cashier_app/screen/base/dependences/menu_section.dart';
+import 'package:cashier_app/screen/base/widget/body_section.dart';
+import 'package:cashier_app/screen/base/widget/menu_section.dart';
 import 'package:cashier_app/utils/size_config.dart';
 import 'package:flutter/material.dart';
 

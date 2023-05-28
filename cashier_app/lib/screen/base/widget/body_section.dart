@@ -48,8 +48,9 @@ class _BodySectionState extends State<BodySection> {
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     return Container(
+      padding: const EdgeInsets.all(20),
       margin: const EdgeInsets.fromLTRB(0, 20, 20, 20),
-      width: SizeConfig.screenWidth! * .9 - 6,
+      width: SizeConfig.screenWidth! * .9 - 8,
       height: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),

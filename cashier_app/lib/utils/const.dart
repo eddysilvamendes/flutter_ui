@@ -11,4 +11,4 @@ const bgColor = Color(0xFFf5f7fb);
 const black = Color(0xFF000000);
 
 //font
-TextStyle roboto = GoogleFonts.roboto();
+final roboto = GoogleFonts.roboto();

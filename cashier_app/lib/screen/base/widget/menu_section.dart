@@ -31,7 +31,7 @@ class MenuItem extends StatelessWidget {
             const SizedBox(width: 10),
             Text(
               menu.text,
-              style: TextStyle(
+              style: roboto.copyWith(
                 color: isActive ? blue : white,
                 fontSize: isActive ? 18 : 14,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
