@@ -1,16 +1,25 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'package:drop_shadow/drop_shadow.dart';
+import 'package:cashier_app/model/cart.dart';
+import 'package:cashier_app/model/category.dart';
+import 'package:cashier_app/model/my_data.dart';
+import 'package:cashier_app/model/product.dart';
+import 'package:cashier_app/screen/cart/cart_item.dart';
+import 'package:cashier_app/screen/category/category_item.dart';
+import 'package:cashier_app/screen/home/widget/search.dart';
+import 'package:cashier_app/screen/product/product_item.dart';
+import 'package:cashier_app/utils/const.dart';
+import 'package:cashier_app/utils/size_config.dart';
+import 'package:cashier_app/widgets/fade_in_animation.dart';
+import 'package:cashier_app/widgets/my_animation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:cashier_app/model/cart.dart';
-import 'package:cashier_app/model/category.dart';
-import 'package:cashier_app/model/product.dart';
-import 'package:cashier_app/utils/const.dart';
-import 'package:cashier_app/utils/size_config.dart';
-
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final MyData data;
+  const HomeScreen({
+    Key? key,
+    required this.data,
+  }) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,7 +36,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   AnimatedContainer indicator({int? index}) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+      margin: const EdgeInsets.only(right: 5),
+      duration: const Duration(milliseconds: 500),
       height: 5,
       width: currentProductPage == index ? 30 : 5,
       decoration: BoxDecoration(
@@ -39,6 +49,52 @@ class _HomeScreenState extends State<HomeScreen>
 
   List<Cart> carts = [];
   List<Product> myProduct = products;
+
+  addCart(Product product) {
+    setState(() {
+      if (widget.data.carts
+              .indexWhere((element) => element.product == product) ==
+          -1) {
+        widget.data.carts.add(Cart(product: product, quantity: 1));
+      } else {
+        int qty;
+        int index = widget.data.carts
+            .indexWhere((element) => element.product == product);
+        qty = widget.data.carts[index].quantity! + 1;
+        removeCart(index);
+        widget.data.carts.add(Cart(product: product, quantity: qty));
+      }
+      widget.data.updateData();
+    });
+  }
+
+  void addQty(int index) {
+    setState(() {
+      widget.data.carts[index].quantity =
+          widget.data.carts[index].quantity! + 1;
+      widget.data.updateData();
+    });
+  }
+
+  void reduceQty(int index) {
+    setState(() {
+      if (widget.data.carts[index].quantity! > 1) {
+        widget.data.carts[index].quantity =
+            widget.data.carts[index].quantity! - 1;
+      } else {
+        removeCart(index);
+      }
+      widget.data.updateData();
+    });
+  }
+
+  void removeCart(int index) {
+    setState(() {
+      widget.data.carts.removeAt(index);
+      widget.data.updateData();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
@@ -49,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen>
         SizedBox(
           width: SizeConfig.screenWidth! * .6,
           height: double.infinity,
+          // Home Body
           child: Column(
             children: [
               //Order and date
@@ -78,24 +135,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               const SizedBox(height: 20),
               //Search Bar
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10), color: white),
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    hintText: 'Enter item code',
-                    hintStyle: roboto.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: grey,
-                    ),
-                    prefixIcon: const Icon(Icons.search),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
+              const MySearch(),
               const SizedBox(height: 10),
               //Indicator and Txt
               Row(
@@ -137,17 +177,46 @@ class _HomeScreenState extends State<HomeScreen>
                         spacing: 15,
                         children: [
                           ...List.generate(
-                              index == (myProduct.length / 8).ceil() - 1
-                                  ? myProduct.length % 8
-                                  : 8, (index_) {
-                            var newIndex = (currentProductPage * 8) + index_;
-                            newIndex = newIndex > myProduct.length - 1
-                                ? myProduct.length - 1
-                                : newIndex;
-                            return ProductItem(
-                              product: myProduct[newIndex],
-                            );
-                          }),
+                            index == (myProduct.length / 8).ceil() - 1
+                                ? myProduct.length % 8
+                                : 8,
+                            (index_) {
+                              var newIndex = (currentProductPage * 8) + index_;
+                              newIndex = newIndex > myProduct.length - 1
+                                  ? myProduct.length - 1
+                                  : newIndex;
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    carts.add(
+                                      Cart(
+                                        product: myProduct[newIndex],
+                                        quantity: 1,
+                                      ),
+                                    );
+                                  });
+                                },
+                                child: SizedBox(
+                                  height: 230,
+                                  width: 180,
+                                  child: Stack(
+                                    children: [
+                                      FadeInAnimation(
+                                        durationInMs: (index_ + 1) + 250,
+                                        animatePosition: MyAnimation(
+                                          topAfter: 0,
+                                          topBefore: 230,
+                                        ),
+                                        child: ProductItem(
+                                          product: myProduct[newIndex],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ],
                       ),
                     ),
@@ -284,13 +353,25 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Column(
                         children: [
                           Expanded(
-                            child: Column(
-                              children: [
-                                ...List.generate(
-                                  carts.length,
-                                  (index) => CartItem(cart: carts[index]),
-                                ),
-                              ],
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: Column(
+                                verticalDirection: VerticalDirection.up,
+                                children: [
+                                  ...List.generate(
+                                    carts.length,
+                                    (index) => Dismissible(
+                                      key: Key(carts[index].product!.name!),
+                                      onDismissed: (direction) {
+                                        carts.removeAt(index);
+                                      },
+                                      child: CartItem(
+                                        cart: carts[index],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           //Sub Total and Tax
@@ -462,234 +543,6 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ),
       ],
-    );
-  }
-}
-
-class CartItem extends StatelessWidget {
-  final Cart cart;
-  const CartItem({
-    Key? key,
-    required this.cart,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    SizeConfig().init(context);
-    return SizedBox(
-      width: SizeConfig.screenWidth! * .3 - 110,
-      height: 70,
-      child: Container(
-        width: SizeConfig.screenWidth! * .3 - 110,
-        padding: const EdgeInsets.all(5),
-        margin: const EdgeInsets.only(bottom: 5),
-        decoration: BoxDecoration(
-            color: white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: bgColor,
-                offset: Offset(2, 7),
-                spreadRadius: 0,
-                blurRadius: 5,
-              ),
-            ]),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: DropShadow(
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-                child: Image.asset(
-                  'assets/${cart.product!.image}',
-                  width: 30,
-                  height: 30,
-                ),
-              ),
-            ),
-            const SizedBox(width: 5),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    cart.product!.name!,
-                    style: roboto.copyWith(
-                      fontSize: 16,
-                      color: black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '\$${cart.product!.price}',
-                    style: roboto.copyWith(
-                      fontSize: 20,
-                      color: black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: lightBlue.withOpacity(.1),
-                    ),
-                    child: const Icon(
-                      Icons.remove,
-                      color: blue,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  cart.quantity.toString(),
-                  style: roboto.copyWith(
-                    fontSize: 22,
-                    color: black,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 5),
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: lightBlue.withOpacity(.1),
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: blue,
-                    ),
-                  ),
-                ),
-              ],
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class CategoryItem extends StatelessWidget {
-  const CategoryItem({
-    Key? key,
-    required this.categories,
-    required this.isActive,
-  }) : super(key: key);
-
-  final Categories categories;
-  final bool isActive;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 15),
-      padding: const EdgeInsets.fromLTRB(10, 10, 35, 10),
-      decoration: BoxDecoration(
-        color: isActive ? lightBlue.withOpacity(.3) : white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            height: 50,
-            width: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              image: DecorationImage(
-                  image: AssetImage(
-                    'assets/${categories.image}',
-                  ),
-                  fit: BoxFit.cover),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            categories.text!,
-            style: roboto.copyWith(
-              fontSize: 16,
-              color: lightBlue,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class ProductItem extends StatelessWidget {
-  const ProductItem({
-    Key? key,
-    required this.product,
-  }) : super(key: key);
-
-  final Product product;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 230,
-      width: 180,
-      decoration: BoxDecoration(
-        color: white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      //Product image and name
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          //Product Image
-          Container(
-            height: 180,
-            width: 180,
-            decoration: BoxDecoration(
-              color: white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                  offset: Offset(0, 8),
-                  spreadRadius: 0,
-                  blurRadius: 5,
-                  color: bgColor,
-                )
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: DropShadow(
-                child: Image.asset(
-                  'assets/${product.image}',
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-          //Product Text
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Text(
-              product.name!,
-              style: roboto.copyWith(
-                fontSize: 18,
-                color: black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          )
-        ],
-      ),
     );
   }
 }
